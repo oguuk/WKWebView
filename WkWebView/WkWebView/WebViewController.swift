@@ -39,3 +39,16 @@ class WebViewController: UIViewController {
         view.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|[webView]|", options: [], metrics: nil, views: ["webView": webView]))
         view.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|[webView]|", options: [], metrics: nil, views: ["webView": webView]))
     }
+    
+    private func loadHTMLFile(_ name: String) {
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            if let url = Bundle.main.url(forResource: name, withExtension: "html") {
+                let request = URLRequest(url: url)
+                DispatchQueue.main.async {
+                    self?.webView.load(request)
+                }
+            } else {
+                print("DEBUG : Failed to find the HTML file for resource:", name)
+            }
+        }
+    }
