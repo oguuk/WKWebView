@@ -77,3 +77,13 @@ class WebViewController: UIViewController {
         webView.scrollView.scrollIndicatorInsets = insets
     }
 }
+
+extension WebViewController: WKNavigationDelegate, WKScriptMessageHandler {
+    
+    // MARK: - WKScriptMessageHandler
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        if message.name == "loginSuccess", let email = message.body as? String {
+            print("Login successful with email:", email)
+        }
+    }
+}
