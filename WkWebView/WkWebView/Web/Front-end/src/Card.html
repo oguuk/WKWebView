@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>카드 사용 내역 - 롯데카드 가계부</title>
+    <style>
+        /* 간략한 스타일 코드 */
+        body { font-family: 'Arial', sans-serif; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        tr:hover { background-color: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h2>사용 내역</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>날짜</th>
+                <th>상호명</th>
+                <th>사용금액</th>
+                <th>카테고리</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- 서버에서 내역을 가져와 표시 -->
+            <!-- 예시: -->
+            <tr onclick="showDetails(1)">
+            </tr>
+            <!-- ... -->
+        </tbody>
+    </table>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+        // Firebase 설정 값 (이전에 제공된 설정 값을 그대로 사용합니다)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKIcf0qWJPOjujviGR_-soxkc-s7jAZfU",
+            authDomain: "card-65ada.firebaseapp.com",
+            databaseURL: "https://card-65ada-default-rtdb.firebaseio.com",
+            projectId: "card-65ada",
+            storageBucket: "card-65ada.appspot.com",
+            messagingSenderId: "83092076201",
+            appId: "1:83092076201:web:e7fe699e1d1e0f75781bb8"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app); 
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // 로그인된 사용자가 있다면
+                const userTransactionsCol = collection(db, `USER/PuIOQ8cf5ndGoSJDFvhbgOR4g8y2/transactions`); // Firestore 컬렉션 참조
+                
+                // 사용자 이메일로 데이터베이스에서 데이터 가져오기
+                getDocs(userTransactionsCol).then((snapshot) => {
+                    const transactions = {};
+                    snapshot.forEach(doc => {
+                        transactions[doc.id] = doc.data();
+                    });
+                    renderTransactions(transactions);
+                });
+
+            } else {
+                // 로그인된 사용자가 없다면
+                window.location.href = "Login.html"; // 로그인 페이지로 리다이렉트
+            }
+        });
+
+        function showDetails(transactionId) {
+            // 내역 상세 정보 표시 or WKWebView에 해당 내역 ID 전달
+            window.webkit.messageHandlers.showDetails.postMessage(transactionId);
+        }
+        
+        function renderTransactions(transactions) {
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';  // 기존 내역 제거
+
+            const sortedTransactions = Object.keys(transactions)
+            .map(id => ({ ...transactions[id], id }))
+            .sort((a, b) => b.date.localeCompare(a.date)); 
+
+            for (let transactionObj of sortedTransactions) {
+                const tr = document.createElement('tr');
+                tr.onclick = () => showDetails(transactionObj.id);
+                
+                tr.innerHTML = `
+                <td>${transactionObj.date}</td>
+                <td>${transactionObj.merchant}</td>
+                <td>${transactionObj.amount}</td>
+                <td>${transactionObj.category}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+    </script>
+</body>
+</html>
