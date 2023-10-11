@@ -30,6 +30,14 @@ class WebViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "loginSuccess")
+        
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
     
     private func configureWebView() {
         webView.uiDelegate = self
@@ -52,3 +60,20 @@ class WebViewController: UIViewController {
             }
         }
     }
+    
+    // MARK: - Keyboard Handlers
+    
+    @objc func keyboardWillShow(notification: NSNotification) {
+        if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+            let insets = UIEdgeInsets(top: 0, left: 0, bottom: keyboardSize.height, right: 0)
+            webView.scrollView.contentInset = insets
+            webView.scrollView.scrollIndicatorInsets = insets
+        }
+    }
+    
+    @objc func keyboardWillHide(notification: NSNotification) {
+        let insets = UIEdgeInsets.zero
+        webView.scrollView.contentInset = insets
+        webView.scrollView.scrollIndicatorInsets = insets
+    }
+}
