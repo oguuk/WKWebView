@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <title>로그인 - 롯데카드 가계부</title>
+            <style>
+                body {
+                    font-family: 'Arial', sans-serif;
+                    text-align: center;
+                    margin-top: 100px;
+                }
+                
+                .login-form {
+                    display: inline-block;
+                }
+                
+                .login-form input {
+                    width: 250px;          /* Input 필드의 폭을 지정합니다. */
+                    padding: 10px 15px;   /* Input 필드 내부의 패딩을 지정합니다. */
+                    margin: 5px 0;        /* Input 필드 위아래의 마진을 지정합니다. */
+                    border: 1px solid #ccc; /* 외곽선 스타일을 지정합니다. */
+                    border-radius: 5px;   /* Input 필드의 모서리를 둥글게 만듭니다. */
+                }
+                
+                button {
+                    margin-top: 10px;
+                }
+                
+                .popup {
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    padding: 20px;
+                    background: #fff;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    display: none;
+                }
+                
+                .popup input {
+                    width: 250px;          /* 팝업 내 Input 필드의 폭을 지정합니다. */
+                    padding: 10px 15px;   /* 팝업 내 Input 필드 내부의 패딩을 지정합니다. */
+                    margin: 5px 0;        /* 팝업 내 Input 필드 위아래의 마진을 지정합니다. */
+                    border: 1px solid #ccc; /* 팝업 내 외곽선 스타일을 지정합니다. */
+                    border-radius: 5px;   /* 팝업 내 Input 필드의 모서리를 둥글게 만듭니다. */
+                }
+            </style>
+            
+    </head>
+    
+    <body>
+        <div class="login-form">
+            <img src="pngegg.png" alt="롯데카드 로고" width="200">
+                <div>
+                    <input type="text" id="email" placeholder="이메일" required>
+                </div>
+                <div>
+                    <input type="password" id="password" placeholder="비밀번호" required>
+                </div>
+                <button onclick="login()">로그인</button>
+                <button onclick="showSignupPopup()">회원가입</button>
+        </div>
+        <div class="popup" id="signupPopup">
+            <h2>회원가입</h2>
+            <input type="text" id="signup-email" placeholder="이메일" required>
+                <input type="password" id="signup-password" placeholder="비밀번호" required>
+                    <button onclick="signup()">가입하기</button>
+                    <button onclick="closeSignupPopup()">닫기</button>
+                </div>
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+            import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+            
+            // Firebase 설정 값
+            const firebaseConfig = {
+                apiKey: "AIzaSyBKIcf0qWJPOjujviGR_-soxkc-s7jAZfU",
+                authDomain: "card-65ada.firebaseapp.com",
+                databaseURL: "https://card-65ada-default-rtdb.firebaseio.com",
+                projectId: "card-65ada",
+                storageBucket: "card-65ada.appspot.com",
+                messagingSenderId: "83092076201",
+                appId: "1:83092076201:web:e7fe699e1d1e0f75781bb8"
+            };
+            // Firebase 초기화
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            
+            // 회원가입 팝업 표시
+            window.showSignupPopup = function() {
+                document.getElementById('signupPopup').style.display = 'block';
+            }
+            
+            // 회원가입 팝업 닫기
+            window.closeSignupPopup = function() {
+                document.getElementById('signupPopup').style.display = 'none';
+            }
+            
+            window.login = function() {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    var user = userCredential.user;
+                    
+                    // WKWebView에서 실행 중인지 확인
+                    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.loginSuccess) {
+                        window.webkit.messageHandlers.loginSuccess.postMessage(email);
+                    }
+                    
+                    // Card.html 페이지로 이동
+                    window.location.href = "Card.html";
+                })
+                .catch((error) => {
+                        switch (error.code) {
+                            case "auth/invalid-email":
+                                alert('올바른 이메일 형식이 아닙니다.');
+                                break;
+                            case "auth/user-disabled":
+                                alert('이 계정은 비활성화되었습니다.');
+                                break;
+                            case "auth/user-not-found":
+                                alert('등록되지 않은 이메일입니다.');
+                                break;
+                            case "auth/wrong-password":
+                                alert('비밀번호가 틀렸습니다.');
+                                break;
+                            default:
+                                alert('로그인 실패. 다시 시도해주세요.');
+                                break;
+                        }
+                    });
+            }
+            
+            
+            window.signup = function() {
+                const email = document.getElementById('signup-email').value;
+                const password = document.getElementById('signup-password').value;
+                
+                // 간단한 이메일 형식 검사
+                if (!email.match(/^[\w.-]+@[\w.-]+\.\w+$/)) {
+                    alert('올바른 이메일 형식을 입력해주세요.');
+                    return;
+                }
+                createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    var user = userCredential.user;
+
+                    alert('회원가입 성공!');
+                    closeSignupPopup();
+                })
+                .catch((error) => {
+                    alert("회원가입 오류:", error);
+                    if (error.code === "auth/invalid-email") {
+                        alert('올바른 이메일 형식을 입력해주세요.');
+                    } else if (error.code === "auth/weak-password") {
+                        alert('비밀번호를 6자 이상 입력해주세요.');
+                    } else {
+                        alert('회원가입 실패. 다시 시도해주세요.');
+                    }
+                });
+            }
+            
+        </script>
+    </body>
+</html>
