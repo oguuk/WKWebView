@@ -16,3 +16,9 @@ enum Constant {
     static let imageProfilePath = apiBaseURL + "/v1/api/talk/profile"
     static let userInfoPath = apiBaseURL + "/v2/user/me"
 }
+
+// MARK: - AuthService
+protocol AuthService {
+    func requestAccessToken(with code: String, clientID: String, redirectURI: String, completion: @escaping ([String: String?]?) -> Void)
+    func fetchImage(accessToken: String, completion: @escaping (String, UIImage?) -> Void)
+}
