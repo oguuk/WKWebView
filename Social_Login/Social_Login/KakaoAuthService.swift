@@ -22,6 +22,7 @@ protocol AuthService {
     func requestAccessToken(with code: String, clientID: String, redirectURI: String, completion: @escaping ([String: String?]?) -> Void)
     func fetchImage(accessToken: String, completion: @escaping (String, UIImage?) -> Void)
 }
+
 final class KakaoAuthService: AuthService {
     
     func requestAccessToken(with code: String,
@@ -48,3 +49,28 @@ final class KakaoAuthService: AuthService {
             }
         }.resume()
     }
+    
+    
+    func fetchImage(accessToken: String, completion: @escaping (String, UIImage?) -> Void) {
+        var request = URLRequest(url: URL(string: Constant.imageProfilePath)!)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        struct Info: Codable {
+            let nickName: String
+            let profileImageURL: String
+            let thumbnailURL: String
+        }
+        
+        URLSession.shared.dataTask(with: request) { data, res, err in
+            if let data = data {
+                do {
+                    let response = try JSONDecoder().decode(Info.self, from: data)
+                    let imageURL = URL(string: response.thumbnailURL)!
+                    let imageData = try Data(contentsOf: imageURL)
+                    completion(response.nickName, UIImage(data: imageData))
+                } catch {
+                    print("DEBUG : \(err?.localizedDescription ?? "")")
+                }
+            }
+        }.resume()
+    }}
