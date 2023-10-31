@@ -22,3 +22,29 @@ protocol AuthService {
     func requestAccessToken(with code: String, clientID: String, redirectURI: String, completion: @escaping ([String: String?]?) -> Void)
     func fetchImage(accessToken: String, completion: @escaping (String, UIImage?) -> Void)
 }
+final class KakaoAuthService: AuthService {
+    
+    func requestAccessToken(with code: String,
+                            clientID: String,
+                            redirectURI: String,
+                            completion: @escaping ([String: String?]?) -> Void) {
+        let url = URL(string: Constant.tokenPath)!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        let body = "grant_type=authorization_code&client_id=\(clientID)&redirect_uri=https://\(redirectURI)&code=\(code)"
+        request.httpBody = body.data(using: .utf8)
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let data = data {
+                do {
+                    if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                        let accessToken = json["access_token"] as? String
+                        let refreshToken = json["refresh_token"] as? String
+                        completion(["accessToken" : accessToken, "refreshToken" : refreshToken])
+                    }
+                } catch {
+                    print("Error parsing JSON: \(error)")
+                }
+            }
+        }.resume()
+    }
